@@ -1,0 +1,1255 @@
+<html>
+    <head>
+        <meta name="author" content="Chieler Li">
+        <meta name="keywords" content="Map, Colorable, Custom Map, Custom, world map, Chieler, Mosaic Map, Colorable Map, Travel Map, Visited, Colored">
+        <link rel="icon" type="image/x-icon" href="world.png">
+        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+        <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+        <script src="https://cdn.maptiler.com/maptiler-sdk-js/v2.5.1/maptiler-sdk.umd.js"></script>
+        <link href="https://cdn.maptiler.com/maptiler-sdk-js/v2.5.1/maptiler-sdk.css" rel="stylesheet" />
+        <script src="https://cdn.maptiler.com/leaflet-maptilersdk/v2.0.0/leaflet-maptilersdk.js"></script>
+        <!--From leaflet ajax-->
+        <script src="leaflet/leaflet.ajax.min.js"></script>
+        <link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet">
+        <script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
+        <script src=" https://cdn.jsdelivr.net/npm/leaflet-edgebuffer@1.0.6/src/leaflet.edgebuffer.min.js "></script>
+        <style>
+            html, body {
+                height: 100%;
+                margin: 0;
+                background-color: #3f3f3f; 
+            }
+            #map {
+                height: 100%; 
+                width: 100%;
+            }
+            #contextMenu {
+                display: none;
+                position: absolute;
+                z-index: 9999;
+                background-color: #1f2029;
+                opacity: 0.75;
+                border: 1px solid #757272;
+                border-radius: 12px;
+                box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+                width: 170px;
+                padding: 10px;
+            }
+            
+            #contextMenu input {
+                width: 100%; 
+                padding: 10px;
+                margin: 5px 0; 
+                border: none;
+                border-radius: 5px;
+                background-color: antiquewhite;
+                color: #333;
+                cursor: pointer;
+                font-size: 14px;
+                transition: background-color 0.3s;
+            }
+            
+            #contextMenu input:hover {
+                background-color: #e0e0e0; 
+            }
+            #loginButton {
+                position: absolute;
+                top: 10px;
+                right: 10px;
+                padding: 10px 15px;
+                background-color: #0047ab;
+                color: white;
+                border: none;
+                border-radius: 5px;
+                cursor: pointer;
+                z-index: 10000; 
+            }
+            #loginButton:hover {
+                background-color: #0056b3;
+            }
+            .leaflet-control{
+                display: none;
+            }
+            .sidebar {
+                position: fixed;
+                top: 0;
+                left: 0;
+                height: 100%;
+                width: 250px;
+                background-color: #1f2029; 
+                box-shadow: 4px 0 15px rgba(0, 0, 0, 0.1);
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+                z-index: 1000;
+                font-family: 'Arial', sans-serif;
+            }           
+            .sidebar.open {
+                transform: translateX(0);
+            }            
+            .sidebar-toggle {
+                position: absolute;
+                right: -75px;
+                top: 35px;
+                background: antiquewhite; 
+                color: #4E4B51; 
+                border: none;
+                padding: 10px 15px;
+                cursor: pointer;
+                border-radius: 5px;
+                box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.2);
+                transition: background 0.3s ease;
+            }         
+            .sidebar-toggle:hover {
+                background: whitesmoke; 
+            }         
+            .section {
+                padding: 20px;
+                border-bottom: 1px solid #e0e0e0;
+            }           
+            .user-section {
+                display: flex;
+                align-items: center;
+                gap: 15px;
+                padding: 20px;
+                background-color: #1f2029;
+                border-bottom: 1px solid #e0e0e0;
+            }
+            .dropdown-header {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                cursor: pointer;
+                padding: 10px;
+                user-select: none;
+                transition: background 0.2s ease;
+            }         
+            .dropdown-header:hover {
+                background-color: #4E4B51; 
+            }         
+            .dropdown-content {
+                padding: 10px 20px;
+                display: none;
+            }     
+            .dropdown-content.open {
+                display: block;
+            }       
+            .dropdown-arrow {
+                transition: transform 0.3s ease;
+            }        
+            .dropdown-arrow.open {
+                transform: rotate(90deg);
+            }           
+            .auth-buttons {
+                display: flex;
+                gap: 10px;
+                padding-top: 15px;
+                padding-bottom: 5px;
+            } 
+            .userContainer {
+                display: flex; /* Use flexbox for layout */
+                flex-direction: column; /* Stack elements vertically */
+                align-items: center; /* Center align items */
+                padding: 15px; /* Add padding for spacing */
+                background-color: #343a40; /* Dark background for the user container */
+                border-radius: 5px; /* Rounded corners */
+                margin: 10px 0; /* Margin for spacing */
+                left: 20px;
+            }
+            .User-dropdown {
+                font-size: 16px;
+                font-weight: bold; 
+                color: antiquewhite; 
+                margin-bottom: 17px; 
+                text-align: center;
+            }
+            
+            #logoutBtn {
+                padding: 10px 15px;
+                background-color: #dc3545; 
+                color: antiquewhite; 
+                border: none; 
+                border-radius: 5px;
+                cursor: pointer;
+                font-size: 14px; 
+                transition: background 0.3s ease; 
+                width: 100%; 
+            }
+            #logoutBtn:hover {
+                background-color: #c82333;
+            }        
+            .button {
+                padding: 10px 20px;
+                border: none;
+                border-radius: 5px;
+                cursor: pointer;
+                font-size: 14px;
+                transition: background 0.3s ease;
+            }          
+            .button-primary {
+                background-color: #6666ff;
+                color: white;
+            }          
+            .button-primary:hover {
+                background-color: #3d59ab; 
+            }           
+            .button-secondary {
+                background-color: antiquewhite;
+                color: #333;
+            }           
+            .button-secondary:hover {
+                background-color: #333; 
+                color: antiquewhite;
+            }         
+            .place-item {
+                padding: 5px 0;
+                font-size: 15px;
+                transition: background 0.2s ease;
+                color:antiquewhite;
+            }           
+            .place-item:hover {
+                background-color: #4E4B51; 
+            }
+            span{
+                color: antiquewhite;
+            }
+            #noteModal{
+                display: none; 
+                position: absolute; 
+                border: none;
+                top: 50px; 
+                right: 50px; 
+                width: 32.5%;
+                height: 60%;
+                background: #212122;; 
+                z-index: 9999; 
+                border-radius: 5%;
+                padding: 0px;
+            }
+            #noteEditor{
+                width:100%;
+                height:100%;
+            }
+            
+            #ql-picker-options-0{
+                background-color: #1C1E26;
+                border-color: transparent;
+            }
+            #ql-picker-options-1{
+                background-color: #1C1E26;
+                border-color: transparent;
+            }
+            .ql-picker-item{
+                background-color: #1C1E26;
+                color: antiquewhite;
+                border-color: transparent;
+            }
+            
+            .ql-container {
+                height: 100%; 
+                border: none;
+            }
+            .ql-container.ql-snow{
+                border: none;
+            }
+            .ql-toolbar.ql-snow{
+                border: none;
+            }
+            .loading-overlay {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background-color: rgba(0, 0, 0, 0.7);
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                z-index: 9999;
+            }
+            /* From Uiverse.io by adamgiebl */ 
+            .dots-container {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                height: 100%;
+                width: 100%;
+            }           
+            .dot {
+                height: 20px;
+                width: 20px;
+                margin-right: 10px;
+                border-radius: 10px;
+                background-color: #b3d4fc;
+                animation: pulse 1.5s infinite ease-in-out;
+            }            
+            .dot:last-child {
+                margin-right: 0;
+            }           
+            .dot:nth-child(1) {
+                animation-delay: -0.3s;
+            }         
+            .dot:nth-child(2) {
+                animation-delay: -0.1s;
+            }          
+            .dot:nth-child(3) {
+                animation-delay: 0.1s;
+            }      
+            @keyframes pulse {
+                0% {
+                transform: scale(0.8);
+                background-color: #b3d4fc;
+                box-shadow: 0 0 0 0 rgba(178, 212, 252, 0.7);
+                }
+            
+                50% {
+                transform: scale(1.2);
+                background-color: #6793fb;
+                box-shadow: 0 0 0 10px rgba(178, 212, 252, 0);
+                }
+            
+                100% {
+                transform: scale(0.8);
+                background-color: #b3d4fc;
+                box-shadow: 0 0 0 0 rgba(178, 212, 252, 0.7);
+                }
+                }
+            .btnCloud {
+                background-color: transparent;
+                position: relative;
+                fill: antiquewhite;
+                border: none;
+                left:45px
+              }
+              
+              .btnCloud::after {
+                content: 'SAVE';
+                position: absolute;
+                top: -50%;
+                left: 50%;
+                transform: translateX(-50%);
+                background-color: #fff;
+                padding: 3px 9px;
+                border-radius: 5px;
+                transition: 200ms linear;
+                transition-delay: 200ms;
+                color: black;
+                font-size: 13px;
+                visibility: hidden;
+              }
+              
+              .icon {
+                transform: scale(1.4);
+                transition: 200ms linear;
+              }
+              
+              .btnCloud:hover > .icon {
+                transform: scale(1.7);
+              }
+              
+              .btnCloud:hover > .icon path {
+                fill: #fff;
+                cursor: pointer;
+              }
+              
+              .btnCloud:hover::after {
+                visibility: visible;
+                opacity: 1;
+                top: -70%;
+              }
+            .status-button {
+              position: absolute;
+              margin-top: 11.5px;
+              padding-left: 4px;
+              margin-left: 14px;
+              width: 22px;
+              height: 22px;
+              border: none;
+              border-radius: 9999px;
+              background-color: #dc3545; 
+              cursor: pointer;
+              transition: background-color 0.3s ease;
+              box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+              overflow: hidden;
+            }
+            
+            .status-button::before {
+              content: '✖️';
+              position: absolute;
+              top: 50%;
+              left: 50%;
+              transform: translate(-50%, -50%) rotate(-180deg);
+              font-size: 20px;
+              transition: transform 0.5s ease;
+            }
+            
+            
+            .status-button:hover::before {
+              transform: translate(-50%, -50%) scale(0.75) rotate(-180deg);
+            }
+            
+            .status-button.active:hover::before {
+              transform: translate(-50%, -50%) scale(0.75) rotate(0);
+            }
+            
+            /* Optional ripple effect */
+            .status-button::after {
+              content: '';
+              position: absolute;
+              top: 50%;
+              left: 50%;
+              width: 0;
+              height: 0;
+              background: rgba(255, 255, 255, 0.3);
+              border-radius: 50%;
+              transform: translate(-50%, -50%);
+              transition: width 0.3s ease-out, height 0.3s ease-out, opacity 0.3s ease-out;
+              opacity: 0;
+            }
+            
+            .status-button:active::after {
+              width: 100%;
+              height: 100%;
+              opacity: 1;
+            }
+            .slider-container {
+                padding: 30px;
+                padding-left: 20px;
+            }
+            
+            .slider {
+                -webkit-appearance: none;
+                width: 100%;
+                height: 4px;
+                border-radius: 2px;
+                background: antiquewhite; /* Darker track color */
+                outline: none;
+                opacity: 0.9;
+                transition: opacity .2s;
+            }
+            
+            .slider:hover {
+                opacity: 1;
+            }
+            
+            .slider::-webkit-slider-thumb {
+                -webkit-appearance: none;
+                appearance: none;
+                width: 20px;
+                height: 20px;
+                border-radius: 50%;
+                background: #E5E7EB; /* Light colored thumb to match text */
+                cursor: pointer;
+                transition: background .2s, transform .1s;
+            }
+            
+            .slider::-moz-range-thumb {
+                width: 20px;
+                height: 20px;
+                border-radius: 50%;
+                background: antiquewhite;
+                cursor: pointer;
+                transition: background .2s, transform .1s;
+                border: none;
+            }
+            
+            .slider::-webkit-slider-thumb:hover {
+                background: #e7ae7b;
+                transform: scale(1.1);
+            }
+            
+            .slider::-moz-range-thumb:hover {
+                background: #e7ae7b;
+                transform: scale(1.1);
+            }
+            .slider-value {
+                color: #E5E7EB;
+                font-size: 14px;
+                margin-top: 8px;
+                text-align: center;
+            }
+            p{
+                color: antiquewhite;
+            }
+            
+        </style>
+    </head>
+    <body>
+        <div id="map"></div>
+        <div id = "contextMenu">
+            <input type="button" value = "Mark/Unmark Visited" id ="markVisited">
+            <input type = "button" value = "Mark/Unmark for Future" id="markFuture">
+            <input type="button" value = "Add/View Documents" id ="addDocument"> 
+            <input type ="button" value= "exit" id ="exitMenu">
+        </div>  
+         <!-- sidebar section -->
+        <div class="sidebar" id="mainSideBar">
+            <button class="sidebar-toggle">☰</button>
+            
+            <!-- User Section -->
+            <div class="user-section">
+                <div class="user-info">
+                    <div class="auth-buttons" style="padding-top: 15px;padding-bottom: 5px;" id="user-header">
+                        <button class="button button-primary" id="loginBtn">Login</button>
+                        <button class="button button-secondary" id="signupBtn">Sign Up</button>
+                    </div>
+                </div>
+            </div>
+    
+            <!-- Visited Places Section -->
+            <div class="section">
+                <div class="dropdown-header" data-target="visited-content">
+                    <span class="dropdown-arrow">▶</span>
+                    <span>Visited Places</span>
+                </div>
+                <div class="dropdown-content" id="visited-content">
+                </div>
+            </div>
+    
+            <!-- Want to Visit Section -->
+            <div class="section">
+                <div class="dropdown-header" data-target="wishlist-content">
+                    <span class="dropdown-arrow">▶</span>
+                    <span>Want to Visit</span>
+                </div>
+                <div class="dropdown-content" id="wishlist-content">
+                </div>
+            </div>
+    
+            <!-- Notes Section -->
+            <div class="section">
+                <div class="dropdown-header" data-target="notes-content">
+                    <span class="dropdown-arrow">▶</span>
+                    <span>Notes/Documents</span>
+                </div>
+                <div class="dropdown-content" id="notes-content">
+                </div>
+            </div>
+            <div class="slider-container">
+                <input type="range" min="1" max="10" step="0.1" value="1" class="slider" id="myRange">
+                <div class="slider-value">Zoom: 1</div>
+            </div>
+        </div>
+        <div id="noteModal">
+            <div>
+                <button class="status-button" onclick="this.classList.toggle('active')"></button>
+            </div>
+            <button class="btnCloud" id="saveNote" onclick="saveNotes()">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="25" height="25" style="margin-top: 7px;margin-left: 7px;" class="icon"><path d="M22,15.04C22,17.23 20.24,19 18.07,19H5.93C3.76,19 2,17.23 2,15.04C2,13.07 3.43,11.44 5.31,11.14C5.28,11 5.27,10.86 5.27,10.71C5.27,9.33 6.38,8.2 7.76,8.2C8.37,8.2 8.94,8.43 9.37,8.8C10.14,7.05 11.13,5.44 13.91,5.44C17.28,5.44 18.87,8.06 18.87,10.83C18.87,10.94 18.87,11.06 18.86,11.17C20.65,11.54 22,13.13 22,15.04Z"></path></svg>
+            </button>
+
+            
+
+              
+            <div id="noteEditor"></div>
+
+            <input type="hidden" id="featureIdInput">
+        </div>
+        <div id="loadingOverlay" class="loading-overlay">
+            <section class="dots-container">
+                <div class="dot"></div>
+                <div class="dot"></div>
+                <div class="dot"></div>
+                <div class="dot"></div>
+                <div class="dot"></div>
+              </section>
+        </div>
+
+        <script>
+        //=================Main=================//
+            let contextMenuOpen  =false;
+            let markedFeatures = [];   
+            let featureDataMap = new Map();
+            const bounds = new L.LatLngBounds(    new L.LatLng(-85, -360), // Southwest corner
+            new L.LatLng(85, 360));
+            const key = "kD3rI9asFF9re1naEevG  ";
+            const map = L.map("map", {
+                zoomSnap: 0.5,  
+                zoomDelta: 0.75,
+                wheelPxPerZoomLevel: 150,
+                minZoom: 3,
+                maxBounds: bounds,
+                maxBoundsViscosity: 0.95,
+                
+                
+            }).setView([51.505, -0.09], 3.25);
+
+            const tileLayer = L.tileLayer(`https://api.maptiler.com/maps/streets-v2-dark/{z}/{x}/{y}.png?key=${key}`, {
+                tileSize: 512,
+                zoomOffset: -1,
+                keepBuffer: 4,
+                edgeBufferTiles: 3,
+                attribution: '&copy; <a href="https://www.maptiler.com/">MapTiler</a> &copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(map)
+            let mapLayer;
+            (async () => {
+                try {
+                    mapLayer = await initMap();
+                } catch (error) {
+                    console.error("Failed to initialize map:", error);
+                }
+            })();
+        //========================Main function======================//
+        async function initMap(){
+            const loadingOverlay = document.getElementById('loadingOverlay');
+            loadingOverlay.style.display = 'flex';
+            const { colorMap, markedMap, noteMap } = await preloadMapData();
+                var geojsonLayer = new L.GeoJSON.AJAX("leaflet/map.geojson",{
+                    style: function (feature) {
+                        try {
+                            const featureId = feature.properties.ne_id.toString()     
+                            const savedColor = colorMap.get(featureId);
+                            const savedCountry = markedMap.get(featureId);
+                            
+                            const savedNote = noteMap.get(featureId);
+                            const isColored = savedColor || false; 
+                            const isMarked = savedCountry || false;
+                            if(isMarked){
+                                markedFeatures.push(parseInt(savedCountry.markId, 10));   
+                            }
+                            const isSaved = (savedNote)? true : false
+                            
+                            const styleConfig = {
+                                color: "#ff7800", 
+                                weight: 1,     
+                                fillColor: isColored ? "#faebd7" : "#ff0000", 
+                                fillOpacity: isColored ? 0.75 : 0.0,          
+                                opacity: 0.0
+                                
+                            };    
+                            return styleConfig;
+                        } catch (error) {
+                            console.error("Error in style function:", error);
+                            return {
+                                color: "#ff7800",
+                                weight: 1,
+                                fillColor: "#ff0000",
+                                fillOpacity: 0.0,
+                                opacity: 0.0
+                            };
+                        }
+                      },onEachFeature
+            }).addTo(map)
+            geojsonLayer.on('layeradd', function() {
+                // Hide loading overlay when GeoJSON is fully loaded
+                loadingOverlay.style.display = 'none';
+            });
+            await batchUpdateContents();
+            return geojsonLayer;
+        } 
+        document.getElementById("contextMenu").addEventListener("click", async (event) => {
+            if (!currentLayer || !currentFeatureId) return;
+            
+            const action = event.target.id;
+            const contextMenu = document.getElementById("contextMenu");
+            contextMenu.style.display = "none";
+            contextMenuOpen = false;
+        
+            switch(action) {
+                case "markVisited":
+                    await handleMarkVisited(currentLayer, currentFeatureId);
+                    break;
+                case "markFuture":
+                    await handleMarkFuture(featureDataMap.get(currentFeatureId), currentFeatureId);
+                    break;
+                case "addDocument":
+                    const noteModal = document.getElementById("noteModal");
+                    noteModal.style.display = "block";
+                    document.getElementById("featureIdInput").value = currentFeatureId;
+                    const editor = initQuill();
+                    editor.setContents([]);            
+                    try {
+                        const response = await fetch(`/api/map/getNote?countryId=${currentFeatureId}`);
+                        if (response.ok) {
+                            const note = await response.json();
+                            if (note?.content) {
+                                editor.setContents(editor.clipboard.convert(note.content));
+                            }
+                        }
+                    } catch(error) {
+                        console.log("error in fetching note");
+                    }
+                    break;
+                case "exitMenu":
+                    contextMenu.style.display = "none";
+                    contextMenuOpen = false;
+                    break;
+            }
+        });    
+        const onEachFeature = (feature, layer) => {
+            const featureId = feature.properties.ne_id;
+            const featureName = feature.properties.name_en;
+            featureDataMap.set(featureId, featureName);
+        
+            layer.on("click", (e) => {
+                e.originalEvent.preventDefault();
+                e.originalEvent.stopPropagation();
+                const contextMenu = document.getElementById("contextMenu");
+                const noteModal = document.getElementById("noteModal");
+                noteModal.style.display = "none";
+
+                currentLayer = layer;
+                currentFeatureId = featureId;
+
+                if (contextMenuOpen && 
+                contextMenu.style.left === e.originalEvent.pageX + "px" && 
+                contextMenu.style.top === e.originalEvent.pageY + "px") {
+                contextMenu.style.display = "none";
+                contextMenuOpen = false;
+                return;
+            }
+                contextMenu.style.display = "block";
+                contextMenu.style.left = e.originalEvent.pageX + "px";
+                contextMenu.style.top = e.originalEvent.pageY + "px";
+                contextMenuOpen = true;
+
+            });
+        };  
+        //=====================Global var Declarations===============//
+        let quill; 
+        let currentFeatureId = null;
+        const slider = document.getElementById("myRange");
+        const output = document.querySelector(".slider-value");
+        slider.oninput = function() {
+            output.innerHTML = "Zoom: "+this.value;
+        }
+        const handleMarkVisited = async (layer, featureId) => {
+            const currentStyle = layer.options;
+            const isCurrentlyColored = currentStyle.fillOpacity === 0.75;
+            
+            layer.setStyle({
+                fillColor: !isCurrentlyColored ? "#faebd7" : "#ff0000",
+                fillOpacity: !isCurrentlyColored ? 0.75 : 0.0 
+            });
+            
+            try {
+                const response = await fetch("/api/map/updateColor", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({featureId})
+                });
+        
+                if (!response.ok) {
+                    // Revert on any non-OK response
+                    layer.setStyle({
+                        fillColor: isCurrentlyColored ? "#faebd7" : "#ff0000",
+                        fillOpacity: isCurrentlyColored ? 0.75 : 0.0 
+                    });
+                    
+                    if (response.status === 401 || response.status === 403) {
+                        window.location.href = "/login";
+                    }
+                }else{
+                    await updateSidebar('visited', featureId, !isCurrentlyColored);
+                }
+            } catch (error) {
+                layer.setStyle({
+                    fillColor: isCurrentlyColored ? "#faebd7" : "#ff0000",
+                    fillOpacity: isCurrentlyColored ? 0.75 : 0.0 
+                });
+                window.location.href = "/login";
+            }
+        };     
+        const handleMarkFuture = async (featureName, featureId) => {  
+            
+            const isMarked = markedFeatures.includes(featureId); 
+            if (isMarked) {
+                markedFeatures = markedFeatures.filter(id => id !== featureId);     
+            } else {
+                markedFeatures.push(featureId);
+            }
+            updateFutureSidebar()
+            try {
+                const response = await fetch("/api/map/updateMarkedCountry", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({markId: featureId})
+                });
+                if (response.status === 401 || response.status === 403) {
+                    window.location.href = "/login";
+                }
+
+            } catch (error) {
+                window.location.href = "/login";    
+                
+            }
+        };
+        const initQuill = () => {
+            if (!quill) {
+                quill = new Quill('#noteEditor', {
+                    theme: 'snow',
+                    modules: {
+                        toolbar: [
+                            ['bold', 'italic', 'underline', 'strike'],
+                            ['blockquote', 'code-block'],
+                            [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
+                            [{ 'list': 'ordered' }, { 'list': 'bullet' }, { 'list': 'check' }],
+                            [{ 'script': 'sub'}, { 'script': 'super' }],
+                            [{ 'indent': '-1'}, { 'indent': '+1' }],
+                            [{ 'direction': 'rtl' }],
+                            [{ 'size': ['small', false, 'large', 'huge'] }],
+                            ['link'],
+                            [{ 'color': [] }, { 'background': [] }],
+                            ['clean'],
+                        ]
+                    }
+                });
+            }
+            return quill;
+        };
+        //=====================Function Declarations=================// 
+        function updateFutureSidebar() {
+            const wishlistContainer = document.getElementById("wishlist-content");
+            //markedFeatures.forEach(c=>console.log(c));
+            // Clear only items not in the list
+            const currentItems = Array.from(wishlistContainer.children);
+            currentItems.forEach(item => {
+                const featureId = parseInt(item.dataset.featureId, 10);
+                if (!markedFeatures.includes(featureId)) {
+                    wishlistContainer.removeChild(item);
+
+                }
+            });
+        
+            // Add missing items
+            markedFeatures.forEach(featureId => {
+                // Skip if already in the DOM
+                if (wishlistContainer.querySelector(`[data-feature-id="${featureId}"]`)) {
+                    return;
+                }
+        
+                
+                const featureName = featureDataMap.get(parseInt(featureId, 10));
+                //console.log(featureName)
+                const listItem = document.createElement("div");
+                listItem.id = `wishlist-item-${featureId}`;
+                listItem.className = "place-item";
+                listItem.dataset.featureId = featureId;
+                listItem.textContent = featureName;
+                wishlistContainer.appendChild(listItem);
+            });
+        }      
+        function cancelNotes(){
+            document.getElementById("noteModal").style.display = "none";
+        }      
+        function updateUserUI(isLoggedIn, username) {
+            const userInfo = document.querySelector('.user-info');
+            const userSection = document.querySelector('.user-section');
+            if (isLoggedIn) {
+                userSection.innerHTML = `
+                <div>
+                    <div class="User-dropdown">${username}'s Mosaic
+                    </div>
+                    <button id="logoutBtn", onclick=logout()>Logout</button>
+                </div>
+                `;
+            } else {
+                userInfo.innerHTML = `
+                    <div class="auth-buttons">
+                        <button class="button button-primary" id="loginBtn">Login</button>
+                        <button class="button button-secondary" id="signupBtn">Sign Up</button>
+                    </div>
+                `;
+                const loginBtn = document.getElementById('loginBtn');
+                const signupBtn = document.getElementById('signupBtn');    
+                loginBtn.addEventListener('click', () => {
+                    window.location.href = '/login';
+                });
+        
+                signupBtn.addEventListener('click', () => {
+                    window.location.href = '/signup';
+                });
+            }
+
+        }
+        function createContentElement(name) {
+            const div = document.createElement("div");
+            div.textContent = name; 
+            return div;
+        }        
+        function logout(){
+            window.location.href="/logout"
+        }
+        function closeContextMenu(){
+            
+                const contextMenu = document.getElementById("contextMenu");
+                if(contextMenu){
+                    contextMenu.style.display = "none";
+                }
+            }
+        function addNoteToSidebar(countryId, countryName) {
+                const notesContent = document.getElementById("notes-content");
+                
+                // Check if note already exists in sidebar
+                const existingNote = document.getElementById(`noteReference-${countryId}`);
+                if (existingNote) {
+                    return; // Note already exists in sidebar
+                }
+            
+                const element = document.createElement("div");
+                element.className = "place-item";
+                element.id = `noteReference-${countryId}`;
+                element.textContent = countryName;
+                
+                // Add click handler to view note
+                element.onclick = async function () {
+                    document.getElementById("noteModal").style.display = "block";
+                    document.getElementById("featureIdInput").value = countryId;
+                    
+                    if (!quill) {
+                        quill = initQuill();
+                    } else {
+                        quill.setContents([]); 
+                    }
+            
+                    try {
+                        const response = await fetch(`/api/map/getNote?countryId=${countryId}`);
+                        if (response.ok) {
+                            const noteData = await response.json();
+                            if (noteData && noteData.content) {
+                                const delta = quill.clipboard.convert(noteData.content);
+                                quill.setContents(delta);
+                            }
+                        }
+                    } catch (error) {
+                        console.error("Error fetching note:", error);
+                    }
+                };
+            
+                notesContent.appendChild(element);
+            }
+        async function preloadMapData() {
+            const [savedColors, savedMarkedCountries, savedNotes] = await Promise.all([
+                loadSavedColors(),
+                loadSavedCountries(),
+                loadSavedNotes()
+            ]);
+        
+            return {
+                colorMap: new Map(savedColors.map(c => [c.featureId, c.isColored])),
+                markedMap: new Map(savedMarkedCountries.map(c => [c.markId, c])),
+                noteMap: new Map(savedNotes.map(c => [c.countryId, c]))
+            };
+        }
+        async function loadSavedColors(){
+                try{
+                    const response = await fetch("/api/map/colors");
+                    if(response.ok){
+                        const colors = await response.json();
+                        return colors;
+                    }else{
+                        //console.error("Failed to fetch colors, response was not ok");
+                        return [];
+                    }
+                }catch (error){
+                    //console.log("load saved colors threw error");
+                    return [];
+                }
+                
+            }
+        async function loadSavedCountries(){
+                try{
+                    const response = await fetch("/api/map/markedCountries");
+                    if(response.ok){
+                        const markedCountries = await response.json();
+                        return markedCountries;
+                    }else{ 
+                        //console.error("Failed to fetch colors, response was not ok");
+                        return [];  
+                    }
+                }catch(error){
+                    
+                    return [];
+                }
+            }
+        async function loadSavedNotes(){
+            try{
+                const response = await fetch("/api/map/getNotes")
+                if(response.ok){
+                    const savedNotes = await response.json()
+                    return savedNotes
+                }else{
+                    //console.error("Failed to fetch colors, response was not ok");
+                    return [];  
+                }
+            }catch(error){
+                console.log("loadSavedNotes failed")
+                return[]
+            }
+        }
+        async function checkLoggedIn(){
+            try{
+                const response = await fetch("/isLoggedIn");
+                if(response.ok){
+                    const text = await response.text(); 
+                    const match = text.match(/^([a-zA-Z0-9_]+)/);
+                    const username = (match)? match[1] : "Guest"
+
+                    updateUserUI(true, username)
+
+                }else{
+                    updateUserUI(false, "Guest")
+
+                }
+            }catch(error){
+                console.log("Check logged in failed")
+            }
+        }
+        async function getUsername(){
+            try{
+                const response = await fetch("/api/map/getUsername");
+                if(response.ok){
+                    return await response.text(); ;
+
+                }else{
+                    window.location.href = "/login";
+                    return;
+                    
+                }
+            }catch(error){
+                console.log("Check logged in failed")
+            }
+        }
+        async function saveNotes() {
+            const content = quill.root.innerHTML;
+            const featureId = document.getElementById("featureIdInput").value;
+            document.getElementById("noteModal").style.display = "none";
+            
+            if (!featureId || !content) return;
+            
+            const payload = {
+                countryId: featureId,
+                content: content,
+            };
+            
+            try {
+                const response = await fetch('/api/map/updateNotes', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(payload),
+                });
+        
+                if (response.ok) {
+                    // Get country name from our feature map
+                    const countryName = featureDataMap.get(parseInt(featureId, 10));
+                    if (countryName) {
+                        addNoteToSidebar(featureId, countryName);
+                    }
+                } else {
+                    window.location.href = "/login";
+                }
+            } catch (error) {
+                console.error("Error saving note:", error);
+               window.location.href = "/login";
+            }
+        }
+        async function batchUpdateContents() {
+            
+            const savedColors = await loadSavedColors();
+            const savedMarkedCountries = await loadSavedCountries();
+            const savedNotes = await loadSavedNotes();
+
+            const visitedContent = document.getElementById("visited-content");
+            const wishlistContent = document.getElementById("wishlist-content");
+            const notesContent = document.getElementById("notes-content");
+
+            const visitedFragment = document.createDocumentFragment();
+            const wishlistFragment = document.createDocumentFragment();
+            const notesFragment = document.createDocumentFragment();
+            savedColors.forEach(color=>{
+                let featureData = featureDataMap.get(parseInt(color.featureId, 10));
+                if (featureData&&color.isColored) {
+                    const element = createContentElement(featureData);
+                    element.className = "place-item"
+                    element.dataset.featureId = color.featureId;
+                    visitedFragment.appendChild(element);
+                }
+            })
+            savedMarkedCountries.forEach(country => {
+                let featureData = featureDataMap.get(parseInt(country.markId, 10));
+                if (featureData&&country.isMarked) {
+                    const element = createContentElement(featureData);
+                    element.id = `wishlist-item-${country.markId}`;
+                    element.className = "place-item"
+                    element.dataset.featureId = country.markId;
+                    wishlistFragment.appendChild(element);
+                }
+            });
+            savedNotes.forEach(note => {
+                const featureData = featureDataMap.get(parseInt(note.countryId, 10));
+
+                const element = createContentElement(featureData);
+                element.className = "place-item";
+                element.id = `noteReference-${note.countryId}`;
+                element.onclick = async function () {
+                    document.getElementById("noteModal").style.display = "block";
+                    document.getElementById("featureIdInput").value = featureData;
+                    if (!quill) {
+                        quill = new Quill('#noteEditor', {
+                            theme: 'snow',
+                            modules: {
+                                toolbar: [
+                                    ['bold', 'italic', 'underline', 'strike'],
+                                    ['blockquote', 'code-block'],
+                                    [{ 'header': 1 }, { 'header': 2 }],
+                                    [{ 'list': 'ordered' }, { 'list': 'bullet' }, { 'list': 'check' }],
+                                    [{ 'script': 'sub' }, { 'script': 'super' }],
+                                    [{ 'indent': '-1' }, { 'indent': '+1' }],
+                                    [{ 'direction': 'rtl' }],
+                                    [{ 'size': ['small', false, 'large', 'huge'] }],
+                                    [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
+                                    [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+                                    ['link'],
+                                    [{ 'color': [] }, { 'background': [] }],
+                                    ['clean'],
+                                ],
+                            },
+                        });
+                    } else {
+                        quill.setContents([]); 
+                    }
+
+                    try {
+                        const response = await fetch(`/api/map/getNote?countryId=${note.countryId}`);
+                        if (response.ok) {
+                            const noteData = await response.json();
+                            if (noteData && noteData.content) {
+                                const delta = quill.clipboard.convert(noteData.content);
+                                quill.setContents(delta);
+                            }
+                        } else {
+                            console.error("Failed to fetch note:", await response.text());
+                        }
+                    } catch (error) {
+                        console.error("Error in fetching note:", error);
+                    }
+                };
+
+                notesFragment.appendChild(element);
+            });
+
+            notesContent.appendChild(notesFragment);
+            visitedContent.appendChild(visitedFragment);
+            wishlistContent.appendChild(wishlistFragment);
+        } 
+        async function updateSidebar(type, featureId, isAdding){
+            const featureData = featureDataMap.get(parseInt(featureId, 10));
+            if (!featureData) return;
+            let container;
+            switch(type) {
+                case 'visited':
+                    container = document.getElementById("visited-content");
+                    break;
+            }
+            if (isAdding) {
+                // Check if item already exists
+                if (!container.querySelector(`[data-feature-id="${featureId}"]`)) {
+                    const element = createContentElement(featureData);
+                    element.className = "place-item";
+                    element.dataset.featureId = featureId;
+                    container.appendChild(element);
+                }
+            } else {
+                
+                const existingItem = container.querySelector(`[data-feature-id="${featureId}"]`);
+                if (existingItem) {
+                    container.removeChild(existingItem);
+                }
+            }
+        }
+        //=====================EventListeners========================//
+        document.querySelector('.status-button').addEventListener('click', function() {
+            cancelNotes()
+        });
+        document.addEventListener("keydown", function(event){
+                if(event.key=="Escape"){
+                    event.preventDefault();
+                    closeContextMenu();
+                    cancelNotes();
+                }
+            })  
+        document.addEventListener("DOMContentLoaded", function(){
+            checkLoggedIn();
+            // Toggle sidebar
+            const sidebar = document.querySelector('.sidebar');
+            const sidebarToggle = document.querySelector('.sidebar-toggle');
+    
+            sidebarToggle.addEventListener('click', () => {
+                sidebar.classList.toggle('open');
+                closeContextMenu()
+            });
+    
+            // Toggle dropdowns
+            const dropdownHeaders = document.querySelectorAll('.dropdown-header');
+    
+            dropdownHeaders.forEach(header => {
+                header.addEventListener('click', () => {
+                    closeContextMenu()
+                    const targetId = header.getAttribute('data-target');
+                    const content = document.getElementById(targetId);
+                    const arrow = header.querySelector('.dropdown-arrow');
+                    
+                    content.classList.toggle('open');
+                    arrow.classList.toggle('open');
+                });
+            });
+        })      
+        document.addEventListener('click', function(e) {
+            const contextMenu = document.getElementById("contextMenu");
+            // Check if click is outside the context menu and not on a map feature
+            if (!e.target.closest('.leaflet-interactive') && !e.target.closest('#contextMenu')) {
+                if (contextMenu.style.display === "block") {
+                    contextMenu.style.display = "none";
+                    contextMenuOpen = false;
+                }
+            }
+        });
+        document.addEventListener('DOMContentLoaded', function() {
+            const slider = document.getElementById("myRange");
+            const output = document.querySelector(".slider-value");
+            
+            // Define actual zoom range
+            const actualMinZoom = 2.75;
+            const actualMaxZoom = 20;
+            // Define display range
+            const displayMinZoom = 1;
+            const displayMaxZoom = 20;
+        
+            // Mapping functions
+            function displayToActualZoom(displayValue) {
+                // Linear mapping from display range to actual range
+                return (displayValue - displayMinZoom) * (actualMaxZoom - actualMinZoom) / 
+                       (displayMaxZoom - displayMinZoom) + actualMinZoom;
+            }
+            
+            function actualToDisplayZoom(actualValue) {
+                // Linear mapping from actual range to display range
+                return (actualValue - actualMinZoom) * (displayMaxZoom - displayMinZoom) / 
+                       (actualMaxZoom - actualMinZoom) + displayMinZoom;
+            }
+        
+            // Initialize slider value
+            slider.value = actualToDisplayZoom(map.getZoom()).toFixed(1);
+            output.innerHTML = `Zoom: ${slider.value}`;
+        
+            // Update map zoom when slider changes
+            slider.oninput = function() {
+                const actualZoom = displayToActualZoom(parseFloat(this.value));
+                map.setZoom(actualZoom);
+                output.innerHTML = `Zoom: ${this.value}`;
+            }
+        
+            // Update slider when map zoom changes
+            map.on('zoomend', function() {
+                const currentZoom = map.getZoom();
+                slider.value = actualToDisplayZoom(currentZoom).toFixed(1);
+                output.innerHTML = `Zoom: ${slider.value}`;
+            });
+        });
+        //===========================================================//
+        </script>
+
+    </body>
+</html>
+
