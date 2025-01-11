@@ -4,7 +4,7 @@
 
 Mosaic Map is an interactive website to document your travels
 
-# ![Link](https://mosaicsmap.com/)
+# [Link](https://mosaicsmap.com/)
 
 <img src="https://raw.githubusercontent.com/Chieler/Mosaics_Map/main/src/main/resources/static/world.png" alt="World Map" width="200">
 
